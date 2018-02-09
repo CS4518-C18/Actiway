@@ -4,7 +4,7 @@ import android.content.Context;
 import android.preference.PreferenceManager;
 
 /**
- * @author  Harry Liu
+ * @author Harry Liu
  * @version Feb 9, 2018
  */
 

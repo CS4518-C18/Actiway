@@ -16,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.DetectedActivity;
@@ -37,7 +36,6 @@ import com.google.android.gms.tasks.Task;
 /**
  * @author Poseidon
  * @author Harry Liu
- *
  * @version Feb 8, 2018
  */
 
@@ -248,13 +246,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void updateActivity() {
-        int activity = R.string.still;
+        int activity;
         switch (currentActivity) {
             case DetectedActivity.STILL:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.still));
                 activity = R.string.still;
                 break;
-            case DetectedActivity.TILTING:
             case DetectedActivity.ON_FOOT:
             case DetectedActivity.WALKING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.walking));
@@ -265,6 +262,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.running));
                 activity = R.string.running;
                 break;
+            default:
+                mActivityImageView.setImageDrawable(null);
+                activity = R.string.unknown;
+
         }
         mTextViewActivity.setText(getString(R.string.current_activity, getString(activity)));
     }
@@ -276,9 +277,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        currentActivity = sharedPreferences.getInt(s, DetectedActivity.UNKNOWN);
-
-        updateActivity();
+        if (s.equals(getString(R.string.current_activity_key))) {
+            currentActivity = sharedPreferences.getInt(s, DetectedActivity.UNKNOWN);
+            updateActivity();
+        }
     }
 }
 

@@ -3,7 +3,6 @@ package com.cs4518.poseidon.myapplication;
 import android.app.IntentService;
 import android.content.Intent;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -33,8 +32,15 @@ public class DetectedActivitiesIntentService extends IntentService {
             }
         });
 
-        int activity = detectedActivities.get(0).getType();
-        Utilities.updateActivity(this, activity);
+        DetectedActivity detectedActivity = detectedActivities.get(0);
 
+        int activity = detectedActivity.getType();
+
+        for (DetectedActivity da : detectedActivities) {
+            if (da.getType() == DetectedActivity.RUNNING && da.getConfidence() > 60)
+                activity = da.getType();
+        }
+
+        Utilities.updateActivity(this, activity);
     }
 }
