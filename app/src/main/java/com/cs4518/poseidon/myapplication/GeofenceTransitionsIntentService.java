@@ -37,22 +37,24 @@ public class GeofenceTransitionsIntentService extends IntentService {
         // Test that the reported transition was of interest.
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
             // Enter geofence
-            // Get the geofences that were triggered. A single event can trigger
-            // multiple geofences.
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
-            System.out.println("intent in geofence");
             if (triggeringGeofences.contains(GeofenceManager.fullerGeofence)) {
+                System.out.println("inside fuller geofence");
                 inFullerGeofence = true;
-            } else if (triggeringGeofences.contains(GeofenceManager.libraryGeofence)) {
+            }
+            if (triggeringGeofences.contains(GeofenceManager.libraryGeofence)) {
+                System.out.println("inside library geofence");
                 inLibraryGeofence = true;
             }
         } else if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
             // Exit geofence
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
-            System.out.println("intent out geofence");
             if (triggeringGeofences.contains(GeofenceManager.fullerGeofence)) {
+                System.out.println("outside fuller geofence");
                 inFullerGeofence = false;
-            } else if (triggeringGeofences.contains(GeofenceManager.libraryGeofence)) {
+            }
+            if (triggeringGeofences.contains(GeofenceManager.libraryGeofence)) {
+                System.out.println("outside library geofence");
                 inLibraryGeofence = false;
             }
         } else {

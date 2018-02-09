@@ -33,7 +33,7 @@ public class GeofenceManager {
 
     // Constants
     // public static final String TAG = Geofencing.class.getSimpleName();
-    private static final float GEOFENCE_RADIUS = 50;
+    private static final float GEOFENCE_RADIUS = 30;
     private static final long GEOFENCE_TIMEOUT = Geofence.NEVER_EXPIRE;
     public static final Geofence fullerGeofence = new Geofence.Builder()
             .setRequestId("Fuller Lab")
@@ -44,7 +44,7 @@ public class GeofenceManager {
     public static final Geofence libraryGeofence = new Geofence.Builder()
             .setRequestId("Library")
             .setExpirationDuration(GEOFENCE_TIMEOUT)
-            .setCircularRegion(42.274239, -71.806646, GEOFENCE_RADIUS)
+            .setCircularRegion(42.274275, -71.806630, GEOFENCE_RADIUS)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
             .build();;
 
@@ -97,6 +97,7 @@ public class GeofenceManager {
         // Build a geofence
         // Add it to the list
         mGeofenceList.add(fullerGeofence);
+        mGeofenceList.add(libraryGeofence);
     }
 
     /***
