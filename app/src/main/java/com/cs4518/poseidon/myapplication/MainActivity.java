@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         GoogleApiClient.OnConnectionFailedListener, SensorEventListener {
     private Boolean running = true;
     private SensorManager sensorManager;
-    private Boolean inGeofence = true;
+    private Boolean inGeofence = false;
     private Boolean forTheFirstTime = true;
     private Boolean finishedSixSteps = false;
     private float initialStepInGeofence = 0;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cs4518.poseidon.myapplication">
-    <uses-permission android:name="com.google.gms.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="com.google.ptoviders.gsf.permission.READ_GSERVICES" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -26,7 +26,7 @@
         <service android:name=".ActivityRecognizedService" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDbT65NyEARBom0nGRulbAcJ3mWqDD7KPo" />
+            android:value="AIzaSyC7ZZJbiXdo39z9f0rDM2E33NmJi2NimqI" />
 
     </application>
 
