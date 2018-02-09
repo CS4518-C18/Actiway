@@ -10,4 +10,6 @@
     <string name="still">still</string>
     <string name="walking">walking</string>
     <string name="running">running</string>
+
+    <string name="current_activity_key">current_activity_key</string>
 </resources>

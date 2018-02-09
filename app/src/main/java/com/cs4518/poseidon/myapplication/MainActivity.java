@@ -1,10 +1,14 @@
 package com.cs4518.poseidon.myapplication;
 
 
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -12,7 +16,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
@@ -25,14 +32,16 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.Task;
 
 /**
  * @author Poseidon
  * @author Harry Liu
+ *
  * @version Feb 8, 2018
  */
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private TextView mTextViewFullerLab;
     private TextView mTextViewLibrary;
@@ -42,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private int fuller_lab_count;
     private int library_count;
-    private Activity currentActivity;
+    private int currentActivity;
     private boolean mLocationPermissionGranted;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private GoogleMap mMap;
@@ -52,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final int DEFAULT_ZOOM = 18;
 
     private LocationRequest locationRequest;
+    private ActivityRecognitionClient mActivityRecognitionClient;
 
 
     @Override
@@ -74,7 +84,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mActivityImageView = findViewById(R.id.image_view_activity);
         mTextViewActivity = findViewById(R.id.text_view_activity);
 
-        currentActivity = Activity.STILL;
+        currentActivity = DetectedActivity.STILL;
+
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
         updateActivity();
 
@@ -82,6 +94,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         getLocationPermission();
+
+        mActivityRecognitionClient = new ActivityRecognitionClient(this);
+        requestActivityUpdate();
     }
 
     @Override
@@ -133,6 +148,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         updateDeviceLocation();
     }
 
+    private void requestActivityUpdate() {
+        final long DETECTION_INTERVAL_IN_MILLISECONDS = 500;
+
+        Task<Void> task = mActivityRecognitionClient.requestActivityUpdates(
+                DETECTION_INTERVAL_IN_MILLISECONDS,
+                getActivityDetectionPendingIntent());
+    }
+
+    private PendingIntent getActivityDetectionPendingIntent() {
+        Intent intent = new Intent(this, DetectedActivitiesIntentService.class);
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
     private void getLocationPermission() {
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -182,7 +210,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private LocationRequest getLocationRequest() {
-        final long UPDATE_INTERVAL = 1000L;
+        final long UPDATE_INTERVAL = 0;
         LocationRequest locationRequest = new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(UPDATE_INTERVAL);
@@ -222,15 +250,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void updateActivity() {
         int activity = R.string.still;
         switch (currentActivity) {
-            case STILL:
+            case DetectedActivity.STILL:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.still));
                 activity = R.string.still;
                 break;
-            case WALKING:
+            case DetectedActivity.TILTING:
+            case DetectedActivity.ON_FOOT:
+            case DetectedActivity.WALKING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.walking));
                 activity = R.string.walking;
                 break;
-            case RUNNING:
+            case DetectedActivity.ON_BICYCLE:
+            case DetectedActivity.RUNNING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.running));
                 activity = R.string.running;
                 break;
@@ -241,6 +272,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void updateGeoFenceCounts() {
         mTextViewFullerLab.setText(getString(R.string.visit_to_fuller_lab, fuller_lab_count));
         mTextViewLibrary.setText(getString(R.string.visit_to_library, library_count));
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        currentActivity = sharedPreferences.getInt(s, DetectedActivity.UNKNOWN);
+
+        updateActivity();
     }
 }
 
