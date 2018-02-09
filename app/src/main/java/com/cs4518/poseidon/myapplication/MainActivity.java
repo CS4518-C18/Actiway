@@ -3,51 +3,36 @@ package com.cs4518.poseidon.myapplication;
 
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.PersistableBundle;
+import android.os.Bundle;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
  * @author Poseidon
  * @author Harry Liu
- *
  * @version Feb 8, 2018
  */
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
-//    private Boolean running = true;
-//    private SensorManager sensorManager;
-//    private Boolean inGeofence = false;
-//    private Boolean forTheFirstTime = true;
-//    private Boolean finishedSixSteps = false;
-//    private float initialStepInGeofence = 0;
-//    private int numEnteredGeofence = 0;
-//
-//    public GoogleApiClient mApiClient;
-//    private MapView mapView;
-//    private TextView textView;
-//    private TextView geofence1;
-//    private TextView geofence2;
-//    private ImageView imageView;
-//    private GoogleMap googleMap;
-//    IntentFilter mBroadcastFilter;
-//    private LocalBroadcastManager mBroadcastManager;
 
     private TextView mTextViewFullerLab;
     private TextView mTextViewLibrary;
@@ -64,7 +49,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Location mLastKnownLocation;
 
     private final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
-    private final int DEFAULT_ZOOM = 17;
+    private final int DEFAULT_ZOOM = 18;
+
+    private LocationRequest locationRequest;
 
 
     @Override
@@ -91,48 +78,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         updateActivity();
 
-//        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-//
-//        // Assign views
-//        imageView = findViewById(R.id.imageView2);
-//        textView = findViewById(R.id.activity);
-//        geofence1 =  findViewById(R.id.geofence1);
-//        geofence2 = findViewById(R.id.geofence2);
-//
-//        mApiClient = new GoogleApiClient.Builder(this)
-//                .addApi(ActivityRecognition.API)
-//                .addConnectionCallbacks(this)
-//                .addOnConnectionFailedListener(this)
-//                .build();
-//
-//        mApiClient.connect();
-//
-//        // Manipulate Map
-//        mapView =  findViewById(R.id.mapView);
-//        mapView.onCreate(savedInstanceState);
-//        mapView.getMapAsync(new OnMapReadyCallback() {
-//            @Override
-//            public void onMapReady(GoogleMap mMap) {
-//                googleMap = mMap;
-//                LatLng current = new LatLng(42, -71);
-//                googleMap.addMarker(new MarkerOptions().position(current));
-//                googleMap.moveCamera(CameraUpdateFactory.newLatLng(current));
-//            }
-//        });
-//
-//        mBroadcastFilter = new IntentFilter("PleaseWork");
-//        mBroadcastFilter.addCategory("SampleCategory");
-//        mBroadcastManager = LocalBroadcastManager.getInstance(this);
-//        BroadcastReceiver updateListReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                // When an Intent is received from the update listener IntentService,
-//                // update the display.
-//                uiUpdate(intent.getStringExtra("Activity"));
-//            }
-//        };
-//
-//        mBroadcastManager.registerReceiver(updateListReceiver, mBroadcastFilter);
+        locationRequest = getLocationRequest();
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         getLocationPermission();
@@ -145,9 +91,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    protected void onPostResume() {
+    protected void onResume() {
         mMapView.onResume();
-        super.onPostResume();
+        super.onResume();
     }
 
     @Override
@@ -182,11 +128,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-//        googleMap.setMyLocationEnabled(true);
         mMap = googleMap;
         Log.d(this.getClass().getSimpleName(), "Map ready");
-        getDeviceLocation();
-//        mMapView.onResume();
+        updateDeviceLocation();
     }
 
     private void getLocationPermission() {
@@ -232,29 +176,45 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mLastKnownLocation = null;
                 getLocationPermission();
             }
-        } catch (SecurityException e)  {
+        } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
         }
     }
 
-    private void getDeviceLocation() {
+    private LocationRequest getLocationRequest() {
+        final long UPDATE_INTERVAL = 1000L;
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(UPDATE_INTERVAL);
+        locationRequest.setFastestInterval(UPDATE_INTERVAL);
+        return locationRequest;
+    }
+
+    private void updateDeviceLocation() {
         try {
             if (mLocationPermissionGranted) {
-                Task locationResult = mFusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(this, new OnCompleteListener() {
+                mFusedLocationProviderClient.requestLocationUpdates(locationRequest, new LocationCallback() {
                     @Override
-                    public void onComplete(@NonNull Task task) {
-                        if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
-                            mLastKnownLocation = (Location) task.getResult();
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                                    new LatLng(mLastKnownLocation.getLatitude(),
-                                            mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-                        }
+                    public void onLocationResult(LocationResult locationResult) {
+                        mLastKnownLocation = locationResult.getLastLocation();
+
+                        if (mMap == null) return;
+
+                        LatLng latLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
+                        mMap.clear();
+                        mMap.addMarker(new MarkerOptions()
+                                .position(latLng));
                     }
-                });
+
+                    @Override
+                    public void onLocationAvailability(LocationAvailability locationAvailability) {
+                        super.onLocationAvailability(locationAvailability);
+                    }
+                }, Looper.myLooper());
             }
-        } catch(SecurityException e)  {
+        } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
         }
     }
@@ -282,88 +242,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mTextViewFullerLab.setText(getString(R.string.visit_to_fuller_lab, fuller_lab_count));
         mTextViewLibrary.setText(getString(R.string.visit_to_library, library_count));
     }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-//        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-//        if (countSensor != null) {
-//            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
-//        } else {
-//            Toast.makeText(this, "sensor not found", Toast.LENGTH_SHORT).show();
-//        }
-    }
-//
-//    public void uiUpdate(String activityType) {
-////        textView.setText(activityType);
-////
-////        Log.e("uiUpdate", activityType);
-////        switch(activityType) {
-////            case ActivityRecognizedService.WALKING:
-////                imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.walking));
-////                break;
-////            case ActivityRecognizedService.RUNNING:
-////                imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.running));
-////                break;
-////            case ActivityRecognizedService.STILL:
-////                imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.still));
-////                break;
-////
-////        }
-//    }
-//
-//    @Override
-//    public void onConnected(@Nullable Bundle bundle) {
-////        Intent intent = new Intent( this, ActivityRecognizedService.class );
-////        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-////        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 10, pendingIntent ).setResultCallback(new ResultCallback<Status>() {
-////            @Override
-////            public void onResult(@NonNull Status status) {
-////                Log.e("SUBCLASS", "Return from activity recognition");
-////            }
-////        });
-//    }
-//
-//    @Override
-//    public void onConnectionSuspended(int i) {
-//
-//    }
-//
-//    @Override
-//    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-//
-//    }
-//
-//    @Override
-//    public void onSensorChanged(SensorEvent event) {
-////        if (running) {
-////            if (inGeofence) {
-////                if (!finishedSixSteps) {
-////                    if (forTheFirstTime) {
-////                        initialStepInGeofence = event.values[0];
-////                        forTheFirstTime = false;
-////                    } else {
-////                        if (event.values[0] - initialStepInGeofence >= 6) {
-////                            finishedSixSteps = true;
-////                            numEnteredGeofence++;
-////                            geofence1.setText(String.valueOf(numEnteredGeofence));
-////                            Toast.makeText(this,
-////                                    "6 steps in geofence",
-////                                    Toast.LENGTH_SHORT).show();
-////                        }
-////                    }
-////                }
-////            } else {
-////                forTheFirstTime = true;
-////                finishedSixSteps = false;
-////            }
-////        }
-//    }
-//
-//    @Override
-//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-//    }
 }
 
 
