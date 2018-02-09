@@ -33,17 +33,29 @@ public class GeofenceManager {
 
     // Constants
     // public static final String TAG = Geofencing.class.getSimpleName();
-    private static final float GEOFENCE_RADIUS = 50;
-    private static final long GEOFENCE_TIMEOUT = 24 * 60 * 60 * 1000;
+    private static final float GEOFENCE_RADIUS = 100;
+    private static final long GEOFENCE_TIMEOUT = Geofence.NEVER_EXPIRE;
+    public static final Geofence fullerGeofence = new Geofence.Builder()
+            .setRequestId("Fuller Lab")
+            .setExpirationDuration(GEOFENCE_TIMEOUT)
+            .setCircularRegion(42.274851, -71.806665, GEOFENCE_RADIUS)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+            .build();
+    public static final Geofence libraryGeofence = new Geofence.Builder()
+            .setRequestId("Library")
+            .setExpirationDuration(GEOFENCE_TIMEOUT)
+            .setCircularRegion(42.274851, -71.806665, GEOFENCE_RADIUS)
+            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+            .build();;
 
-    ArrayList<Geofence> mGeofenceList;
+    private ArrayList<Geofence> mGeofenceList;
     private GeofencingClient mGeofencingClient;
     private PendingIntent mGeofencePendingIntent;
     private Context mContext;
 
     public GeofenceManager(Context context){
-        mGeofencingClient = LocationServices.getGeofencingClient(context);
         mContext = context;
+        mGeofencingClient = LocationServices.getGeofencingClient(mContext);
     }
 
     public void addGeofencing () {
@@ -58,20 +70,11 @@ public class GeofenceManager {
         mGeofencingClient.removeGeofences(getGeofencePendingIntent());
     }
 
-    public void updateGeofencesList(){
+    public void intializeGeofencesList(){
         mGeofenceList = new ArrayList<>();
-        String placeUID = "Fuller Lab";
-        double placeLat = 42.274851;
-        double placeLng = -71.806665;
-        // Build a Geofence object
-        Geofence geofence = new Geofence.Builder()
-                    .setRequestId(placeUID)
-                    .setExpirationDuration(GEOFENCE_TIMEOUT)
-                    .setCircularRegion(placeLat, placeLng, GEOFENCE_RADIUS)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
-                    .build();
+        // Build a geofence
         // Add it to the list
-        mGeofenceList.add(geofence);
+        mGeofenceList.add(fullerGeofence);
     }
 
     /***
