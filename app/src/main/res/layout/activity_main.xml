@@ -35,5 +35,20 @@ tools:context="com.cs4518.poseidon.myapplication.MainActivity">
     android:layout_centerHorizontal="true"
     tools:context="com.cs4518.poseidon.myapplication.MainActivity"/>
 
+    <TextView
+        android:text=""
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/geofence1"
+        android:textSize="24sp"
+        android:textAlignment="center"/>
+
+    <TextView
+        android:text=""
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/geofence2"
+        android:textSize="24sp"
+        android:textAlignment="center"/>
 </RelativeLayout>
 
