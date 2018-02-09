@@ -10,19 +10,23 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by jiuchuan on 2/8/18.
+ * @author jiuchuan
+ * @version Feb 8, 2018
  */
 
-public class Geofencing implements ResultCallback {
+public class Geofencing implements OnCompleteListener<Void> {
 
     // Constants
     public static final String TAG = Geofencing.class.getSimpleName();
@@ -42,20 +46,40 @@ public class Geofencing implements ResultCallback {
     }
 
     public void registerAllGeofences(){
-
         if (mGoogleApiClient == null || !mGoogleApiClient.isConnected() ||
                 mGeofenceList == null || mGeofenceList.size() == 0){
             return;
         }
         try{
-            LocationServices.GeofencingApi.addGeofences(
-                    mGoogleApiClient,
-                    getGeofencingRequest(),
-                    getGeofencePendingIntent()
-            ).setResultCallback(this);
+            GeofencingClient geofencingClient = LocationServices.getGeofencingClient(mContext);
+            geofencingClient
+                    .addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                    .addOnCompleteListener(this);
+//            LocationServices.GeofencingApi.addGeofences(
+//                    mGoogleApiClient,
+//                    getGeofencingRequest(),
+//                    getGeofencePendingIntent()
+//            ).setResultCallback(this);
         } catch (SecurityException securityException) {
 
         }
+    }
+
+    @Override
+    public void onComplete(@NonNull Task<Void> task) {
+//        mPendingGeofenceTask = PendingGeofenceTask.NONE;
+//        if (task.isSuccessful()) {
+//            updateGeofencesAdded(!getGeofencesAdded());
+//            setButtonsEnabledState();
+//
+//            int messageId = getGeofencesAdded() ? R.string.geofences_added :
+//                    R.string.geofences_removed;
+//            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
+//        } else {
+//            // Get the status code for the error and log it using a user-friendly message.
+//            String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
+//            Log.w(TAG, errorMessage);
+//        }
     }
 
     public void updateGeofencesList(PlaceBuffer places){
@@ -99,10 +123,5 @@ public class Geofencing implements ResultCallback {
         mGeofencePendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.
                 FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
-    }
-
-    @Override
-    public void onResult(@NonNull Result result){
-        Log.e(TAG, String.format("Error adding/removing geofence : %s"));
     }
 }

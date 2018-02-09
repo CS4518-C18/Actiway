@@ -10,13 +10,15 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.cs4518.poseidon.myapplication.model.Activity;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
 import java.sql.Timestamp;
 
 /**
- * Created by Poseidon on 2/6/18.
+ * @author Poseidon
+ * @version Feb 6, 2018
  */
 
 public class ActivityRecognizedService extends IntentService {

@@ -33,7 +33,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 /**
- * Created by Poseidon on 2/6/18.
+ * @author Poseidon
+ * @version Feb 6, 2018
  */
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
@@ -64,10 +65,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
         // Assign views
-        imageView = (ImageView) findViewById(R.id.imageView2);
-        textView = (TextView) findViewById(R.id.activity);
-        geofence1 = (TextView) findViewById(R.id.geofence1);
-        geofence2 = (TextView) findViewById(R.id.geofence2);
+        imageView = findViewById(R.id.imageView2);
+        textView = findViewById(R.id.activity);
+        geofence1 =  findViewById(R.id.geofence1);
+        geofence2 = findViewById(R.id.geofence2);
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
@@ -78,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mApiClient.connect();
 
         // Manipulate Map
-        mapView = (MapView) findViewById(R.id.mapView);
+        mapView =  findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override

@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 import com.cs4518.poseidon.myapplication.Database.ActivityDbSchema.ActivityTable;
-import com.cs4518.poseidon.myapplication.Activity;
+import com.cs4518.poseidon.myapplication.model.Activity;
 
 /**
  * Created by Poseidon on 2/6/18.

@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.cs4518.poseidon.myapplication.Database.ActivityBaseHelper;
 import com.cs4518.poseidon.myapplication.Database.ActivityCursorWrapper;
 import com.cs4518.poseidon.myapplication.Database.ActivityDbSchema.ActivityTable;
+import com.cs4518.poseidon.myapplication.model.Activity;
 
 
 /**
