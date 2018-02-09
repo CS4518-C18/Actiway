@@ -399,25 +399,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     System.out.println("entering fuller geofence...");
                 } else if (geofenceName.equals("library")) {
                     System.out.println("entering library geofence...");
+                } else {
+                    return;
                 }
                 initialStepInGeofence = event.values[0];
                 forTheFirstTime = false;
             } else {
                 if (event.values[0] - initialStepInGeofence >= 6) {
-                    finishedSixSteps = true;
                     if (geofenceName.equals("fuller")) {
                         numEnteredFullerGeofence++;
-                        setNumEnteredGeofenceText();
                         Toast.makeText(this,
                                 "6 steps in fuller geofence",
                                 Toast.LENGTH_SHORT).show();
                     } else if (geofenceName.equals("library")) {
                         numEnteredLibraryGeofence++;
-                        setNumEnteredGeofenceText();
                         Toast.makeText(this,
                                 "6 steps in library geofence",
                                 Toast.LENGTH_SHORT).show();
+                    } else {
+                        return;
                     }
+                    finishedSixSteps = true;
+                    setNumEnteredGeofenceText();
                 }
             }
         }
