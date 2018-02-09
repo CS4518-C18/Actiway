@@ -1,54 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:app="http://schemas.android.com/apk/res-auto"
-xmlns:tools="http://schemas.android.com/tools"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-tools:context="com.cs4518.poseidon.myapplication.MainActivity">
-
-<ImageView
-    android:layout_width="200dp"
-    android:src="@drawable/running"
-    android:id="@+id/imageView2"
-    android:layout_height="200dp"
-    android:layout_above="@+id/activity"
-    android:layout_centerHorizontal="true" />
-
-<TextView
-    android:text="Activity"
-    android:layout_height="wrap_content"
-    android:id="@+id/activity"
-    android:textSize="24sp"
-    android:textAlignment="center"
-    android:layout_marginBottom="31dp"
-    android:textStyle="normal|bold"
-    android:fontFamily="casual"
-    android:layout_width="wrap_content"
-    android:layout_alignParentBottom="true"
-    android:layout_centerHorizontal="true" />
-
-<com.google.android.gms.maps.MapView
-    android:id="@+id/mapView"
-    android:layout_height="200dp"
-    android:layout_width="300dp"
-    android:layout_above="@+id/imageView2"
-    android:layout_centerHorizontal="true"
-    tools:context="com.cs4518.poseidon.myapplication.MainActivity"/>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.cs4518.poseidon.myapplication.MainActivity">
 
     <TextView
-        android:text=""
+        android:id="@+id/text_view_fuller_lab"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/geofence1"
-        android:textSize="24sp"
-        android:textAlignment="center"/>
+        android:textAlignment="center"
+        android:textSize="@dimen/font_size" />
 
     <TextView
-        android:text=""
+        android:id="@+id/text_view_library"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/geofence2"
-        android:textSize="24sp"
-        android:textAlignment="center"/>
-</RelativeLayout>
+        android:textAlignment="center"
+        android:textSize="@dimen/font_size" />
+
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/map_view"
+        android:layout_width="@dimen/map_width"
+        android:layout_height="@dimen/map_width"
+        android:layout_gravity="center_horizontal"
+        android:background="@color/placeHolder" />
+
+    <ImageView
+        android:id="@+id/image_view_activity"
+        android:layout_width="@dimen/activity_image_width"
+        android:layout_height="@dimen/activity_image_width"
+        android:layout_gravity="center_horizontal" />
+
+    <TextView
+        android:id="@+id/text_view_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="@dimen/font_size" />
+
+</LinearLayout>
 

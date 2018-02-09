@@ -1,4 +1,13 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Activities &amp; Map</string>
     <string name="activity">Activity</string>
+    
+    <string name="visit_to_fuller_lab">Visit to fuller lab geoFence: %1$d</string>
+    <string name="visit_to_library">Visit to library geoFence: %1$d</string>
+
+    <string name="current_activity">You are %1$s</string>
+
+    <string name="still">still</string>
+    <string name="walking">walking</string>
+    <string name="running">running</string>
 </resources>
