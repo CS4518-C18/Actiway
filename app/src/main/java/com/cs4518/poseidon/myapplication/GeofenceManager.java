@@ -33,7 +33,7 @@ public class GeofenceManager {
 
     // Constants
     // public static final String TAG = Geofencing.class.getSimpleName();
-    private static final float GEOFENCE_RADIUS = 100;
+    private static final float GEOFENCE_RADIUS = 50;
     private static final long GEOFENCE_TIMEOUT = Geofence.NEVER_EXPIRE;
     public static final Geofence fullerGeofence = new Geofence.Builder()
             .setRequestId("Fuller Lab")
@@ -44,7 +44,7 @@ public class GeofenceManager {
     public static final Geofence libraryGeofence = new Geofence.Builder()
             .setRequestId("Library")
             .setExpirationDuration(GEOFENCE_TIMEOUT)
-            .setCircularRegion(42.274851, -71.806665, GEOFENCE_RADIUS)
+            .setCircularRegion(42.274239, -71.806646, GEOFENCE_RADIUS)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
             .build();;
 
@@ -60,14 +60,36 @@ public class GeofenceManager {
 
     public void addGeofencing () {
         try {
-            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent());
+            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        System.out.println("add geofences success");
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        System.out.println("add geofences fail");
+                    }
+                });
         } catch (SecurityException e) {
             e.printStackTrace();
         }
     }
 
     public void removeGeofencing () {
-        mGeofencingClient.removeGeofences(getGeofencePendingIntent());
+        mGeofencingClient.removeGeofences(getGeofencePendingIntent()).
+                addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        System.out.println("remove geofences success");
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        System.out.println("remove geofences fail");
+                    }
+                });
     }
 
     public void intializeGeofencesList(){
@@ -90,13 +112,16 @@ public class GeofenceManager {
         return builder.build();
     }
 
+
     private PendingIntent getGeofencePendingIntent() {
         // Reuse the PendingIntent if we already have it.
         if (mGeofencePendingIntent != null) {
             return mGeofencePendingIntent;
         }
         Intent intent = new Intent(mContext, GeofenceTransitionsIntentService.class);
-        mGeofencePendingIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
+        // calling addGeofences() and removeGeofences().
+        mGeofencePendingIntent = PendingIntent.getService(mContext, 0, intent, PendingIntent.
                 FLAG_UPDATE_CURRENT);
         return mGeofencePendingIntent;
     }
