@@ -22,7 +22,7 @@
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/map_view"
-        android:layout_width="@dimen/map_width"
+        android:layout_width="match_parent"
         android:layout_height="@dimen/map_width"
         android:layout_gravity="center_horizontal"
         android:background="@color/placeHolder" />

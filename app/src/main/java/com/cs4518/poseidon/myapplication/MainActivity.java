@@ -1,5 +1,7 @@
 package com.cs4518.poseidon.myapplication;
 
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -11,6 +13,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -20,6 +23,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationAvailability;
 import com.google.android.gms.location.LocationCallback;
@@ -32,14 +37,16 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.Task;
 
 /**
+ * @author Haofan
  * @author Poseidon
  * @author Harry Liu
  * @version Feb 8, 2018
  */
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, SensorEventListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, SharedPreferences.OnSharedPreferenceChangeListener, SensorEventListener {
     // step counter
     private Boolean running = true;
     private SensorManager sensorManager;
@@ -67,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageView mActivityImageView;
     private TextView mTextViewActivity;
 
-    private Activity currentActivity;
+    private int currentActivity;
     private boolean mLocationPermissionGranted;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private GoogleMap mMap;
@@ -77,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final int DEFAULT_ZOOM = 18;
 
     private LocationRequest locationRequest;
+    private ActivityRecognitionClient mActivityRecognitionClient;
 
 
     @Override
@@ -94,7 +102,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mActivityImageView = findViewById(R.id.image_view_activity);
         mTextViewActivity = findViewById(R.id.text_view_activity);
 
-        currentActivity = Activity.STILL;
+        currentActivity = DetectedActivity.STILL;
+
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
         updateActivity();
 
@@ -114,6 +124,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         getLocationPermission();
 
+        mActivityRecognitionClient = new ActivityRecognitionClient(this);
+        requestActivityUpdate();
         // initialize geofence manager
         if (mLocationPermissionGranted) {
             mGeofenceManager = new GeofenceManager(this);
@@ -185,6 +197,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         updateDeviceLocation();
     }
 
+    private void requestActivityUpdate() {
+        final long DETECTION_INTERVAL_IN_MILLISECONDS = 500;
+
+        Task<Void> task = mActivityRecognitionClient.requestActivityUpdates(
+                DETECTION_INTERVAL_IN_MILLISECONDS,
+                getActivityDetectionPendingIntent());
+    }
+
+    private PendingIntent getActivityDetectionPendingIntent() {
+        Intent intent = new Intent(this, DetectedActivitiesIntentService.class);
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
     private void getLocationPermission() {
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -208,7 +233,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
-
+                  
+                    updateDeviceLocation();
                     mGeofenceManager = new GeofenceManager(this);
                     mGeofenceManager.intializeGeofencesList();
                     mGeofenceManager.addGeofencing();
@@ -238,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private LocationRequest getLocationRequest() {
-        final long UPDATE_INTERVAL = 1000L;
+        final long UPDATE_INTERVAL = 0;
         LocationRequest locationRequest = new LocationRequest();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         locationRequest.setInterval(UPDATE_INTERVAL);
@@ -257,8 +283,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (mMap == null) return;
 
                         LatLng latLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
-                        //System.out.println("lat: " + mLastKnownLocation.getLatitude());
-                        //System.out.println("long: " + mLastKnownLocation.getLongitude());
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
                         mMap.clear();
                         mMap.addMarker(new MarkerOptions()
@@ -277,65 +301,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void updateActivity() {
-        int activity = R.string.still;
+        int activity;
         switch (currentActivity) {
-            case STILL:
+            case DetectedActivity.STILL:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.still));
                 activity = R.string.still;
                 break;
-            case WALKING:
+            case DetectedActivity.ON_FOOT:
+            case DetectedActivity.WALKING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.walking));
                 activity = R.string.walking;
                 break;
-            case RUNNING:
+            case DetectedActivity.ON_BICYCLE:
+            case DetectedActivity.RUNNING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.running));
                 activity = R.string.running;
                 break;
+            default:
+                mActivityImageView.setImageDrawable(null);
+                activity = R.string.unknown;
+
         }
         mTextViewActivity.setText(getString(R.string.current_activity, getString(activity)));
     }
 
-//
-//    public void uiUpdate(String activityType) {
-////        textView.setText(activityType);
-////
-////        Log.e("uiUpdate", activityType);
-////        switch(activityType) {
-////            case ActivityRecognizedService.WALKING:
-////                imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.walking));
-////                break;
-////            case ActivityRecognizedService.RUNNING:
-////                imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.running));
-////                break;
-////            case ActivityRecognizedService.STILL:
-////                imageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.still));
-////                break;
-////
-////        }
-//    }
-//
-//    @Override
-//    public void onConnected(@Nullable Bundle bundle) {
-////        Intent intent = new Intent( this, ActivityRecognizedService.class );
-////        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-////        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 10, pendingIntent ).setResultCallback(new ResultCallback<Status>() {
-////            @Override
-////            public void onResult(@NonNull Status status) {
-////                Log.e("SUBCLASS", "Return from activity recognition");
-////            }
-////        });
-//    }
-//
-//    @Override
-//    public void onConnectionSuspended(int i) {
-//
-//    }
-//
-//    @Override
-//    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-//
-//    }
-//
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (running) {
@@ -354,6 +343,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        if (s.equals(getString(R.string.current_activity_key))) {
+            currentActivity = sharedPreferences.getInt(s, DetectedActivity.UNKNOWN);
+            updateActivity();
+        }
+    }
+  
     private void enterGeofence (CustomGeofence cGeofence, SensorEvent event) {
         if (!cGeofence.finishedSixSteps) {
             if (cGeofence.forTheFirstTime) {
@@ -392,7 +389,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
-
 }
 
 

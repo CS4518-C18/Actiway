@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
 
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -28,9 +29,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".DetectedActivitiesIntentService" />
         <service android:name=".GeofenceTransitionsIntentService" />
-        <!--<service android:name=".ActivityRecognizedService" />-->
-
     </application>
 
 </manifest>
