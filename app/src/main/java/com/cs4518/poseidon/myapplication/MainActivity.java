@@ -1,10 +1,15 @@
 package com.cs4518.poseidon.myapplication;
 
-
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.Manifest;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -16,6 +21,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.DetectedActivity;
@@ -34,12 +40,33 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
 /**
+ * @author Haofan
  * @author Poseidon
  * @author Harry Liu
  * @version Feb 8, 2018
  */
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, SharedPreferences.OnSharedPreferenceChangeListener, SensorEventListener {
+    // step counter
+    private Boolean running = true;
+    private SensorManager sensorManager;
+
+    // geofence
+    private GeofenceManager mGeofenceManager;
+
+    // numEnteredGeofence
+    private final String NUM_ENTERED_GEOFENCE_PREFERENCE = "SHARED_PREFERENCE_NUM_ENTERED_GEOFENCE";
+    private final String NUM_ENTERED_FULLER_GEOFENCE = "NUM_ENTERED_FULLER_GEOFENCE";
+    private final String NUM_ENTERED_LIBRARY_GEOFENCE = "NUM_ENTERED_LIBRARY_GEOFENCE";
+    SharedPreferences numEnteredSharedPref;
+    private CustomGeofence fullerGeofence = new CustomGeofence(
+            "fuller lab",
+            0,
+            NUM_ENTERED_FULLER_GEOFENCE);
+    private CustomGeofence libraryGeofence = new CustomGeofence(
+            "library",
+            0,
+            NUM_ENTERED_LIBRARY_GEOFENCE);
 
     private TextView mTextViewFullerLab;
     private TextView mTextViewLibrary;
@@ -47,8 +74,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ImageView mActivityImageView;
     private TextView mTextViewActivity;
 
-    private int fuller_lab_count;
-    private int library_count;
     private int currentActivity;
     private boolean mLocationPermissionGranted;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -67,13 +92,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        fuller_lab_count = 0;
-        library_count = 0;
-
         mTextViewFullerLab = findViewById(R.id.text_view_fuller_lab);
         mTextViewLibrary = findViewById(R.id.text_view_library);
-
-        updateGeoFenceCounts();
 
         mMapView = findViewById(R.id.map_view);
         mMapView.onCreate(savedInstanceState);
@@ -88,6 +108,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         updateActivity();
 
+        // initialize counter sensor
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        // load numEnteredGeofence shared pref
+        numEnteredSharedPref = this.getSharedPreferences(
+                NUM_ENTERED_GEOFENCE_PREFERENCE, Context.MODE_PRIVATE);
+
+        fullerGeofence.numEnteredGeofence = numEnteredSharedPref.getInt(fullerGeofence.SHARED_PREF_KEY, 0);
+        libraryGeofence.numEnteredGeofence = numEnteredSharedPref.getInt(libraryGeofence.SHARED_PREF_KEY, 0);
+        setNumEnteredGeofenceText();
+
         locationRequest = getLocationRequest();
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -95,7 +126,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mActivityRecognitionClient = new ActivityRecognitionClient(this);
         requestActivityUpdate();
+        // initialize geofence manager
+        if (mLocationPermissionGranted) {
+            mGeofenceManager = new GeofenceManager(this);
+            mGeofenceManager.intializeGeofencesList();
+            mGeofenceManager.addGeofencing();
+        }
     }
+
 
     @Override
     protected void onStart() {
@@ -106,12 +144,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onResume() {
         mMapView.onResume();
+        running = true;
+        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        if (countSensor != null) {
+            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
+        } else {
+            Toast.makeText(this, "sensor not found", Toast.LENGTH_SHORT).show();
+        }
         super.onResume();
     }
 
     @Override
     protected void onStop() {
         mMapView.onStop();
+        if (mGeofenceManager != null) mGeofenceManager.removeGeofencing();
+        SharedPreferences.Editor editor = numEnteredSharedPref.edit();
+        editor.putInt(fullerGeofence.SHARED_PREF_KEY, fullerGeofence.numEnteredGeofence);
+        editor.putInt(libraryGeofence.SHARED_PREF_KEY, libraryGeofence.numEnteredGeofence);
+        editor.apply();
         super.onStop();
     }
 
@@ -130,6 +180,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onPause() {
         mMapView.onPause();
+        running = false;
         super.onPause();
     }
 
@@ -182,7 +233,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
+                  
                     updateDeviceLocation();
+                    mGeofenceManager = new GeofenceManager(this);
+                    mGeofenceManager.intializeGeofencesList();
+                    mGeofenceManager.addGeofencing();
                 }
             }
         }
@@ -228,7 +283,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (mMap == null) return;
 
                         LatLng latLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
-
                         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, DEFAULT_ZOOM));
                         mMap.clear();
                         mMap.addMarker(new MarkerOptions()
@@ -271,9 +325,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mTextViewActivity.setText(getString(R.string.current_activity, getString(activity)));
     }
 
-    private void updateGeoFenceCounts() {
-        mTextViewFullerLab.setText(getString(R.string.visit_to_fuller_lab, fuller_lab_count));
-        mTextViewLibrary.setText(getString(R.string.visit_to_library, library_count));
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (running) {
+            if (GeofenceTransitionsIntentService.inFullerGeofence) {
+                enterGeofence(fullerGeofence, event);
+            } else {
+                fullerGeofence.forTheFirstTime = true;
+                fullerGeofence.finishedSixSteps = false;
+            }
+            if (GeofenceTransitionsIntentService.inLibraryGeofence) {
+                enterGeofence(libraryGeofence, event);
+            } else {
+                libraryGeofence.forTheFirstTime = true;
+                libraryGeofence.finishedSixSteps = false;
+            }
+        }
     }
 
     @Override
@@ -282,6 +349,45 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             currentActivity = sharedPreferences.getInt(s, DetectedActivity.UNKNOWN);
             updateActivity();
         }
+    }
+  
+    private void enterGeofence (CustomGeofence cGeofence, SensorEvent event) {
+        if (!cGeofence.finishedSixSteps) {
+            if (cGeofence.forTheFirstTime) {
+                String enterGeofence = "entering " + cGeofence.name + " geofence";
+                Toast.makeText(this,
+                        enterGeofence,
+                        Toast.LENGTH_SHORT).show();
+                cGeofence.initialStepInGeofence = event.values[0];
+                cGeofence.forTheFirstTime = false;
+            } else {
+                if (event.values[0] - cGeofence.initialStepInGeofence >= 6) {
+                    cGeofence.numEnteredGeofence++;
+                    String sixStepGeofence = "6 steps in " + cGeofence.name + " geofence";
+                    Toast.makeText(this,
+                            sixStepGeofence,
+                            Toast.LENGTH_SHORT).show();
+                    System.out.println(sixStepGeofence);
+                    cGeofence.finishedSixSteps = true;
+                    setNumEnteredGeofenceText();
+                }
+            }
+        }
+    }
+
+    private void setNumEnteredGeofenceText () {
+        String fullerText = "You visited Fuller lab for "
+                + String.valueOf(fullerGeofence.numEnteredGeofence)
+                + " times";
+        String libraryText = "You visited Library for "
+                + String.valueOf(libraryGeofence.numEnteredGeofence)
+                + " times";
+        mTextViewFullerLab.setText(fullerText);
+        mTextViewLibrary.setText(libraryText);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 }
 
