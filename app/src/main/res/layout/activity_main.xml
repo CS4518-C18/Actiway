@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAlignment="center"
+        android:layout_marginTop="@dimen/margin"
         android:textSize="@dimen/font_size" />
 
     <TextView
@@ -18,12 +19,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAlignment="center"
+        android:layout_marginBottom="@dimen/margin"
         android:textSize="@dimen/font_size" />
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/map_view"
+        android:layout_marginLeft="@dimen/margin"
+        android:layout_marginRight="@dimen/margin"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/map_width"
+        android:layout_height="@dimen/map_height"
         android:layout_gravity="center_horizontal"
         android:background="@color/placeHolder" />
 
@@ -31,6 +35,7 @@
         android:id="@+id/image_view_activity"
         android:layout_width="@dimen/activity_image_width"
         android:layout_height="@dimen/activity_image_width"
+        android:layout_marginTop="@dimen/margin"
         android:layout_gravity="center_horizontal" />
 
     <TextView
@@ -38,6 +43,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAlignment="center"
+        android:layout_marginTop="@dimen/margin"
         android:textSize="@dimen/font_size" />
 
 </LinearLayout>

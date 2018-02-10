@@ -1,7 +1,8 @@
 package com.cs4518.poseidon.myapplication;
 
 /**
- * Created by haofanzhang on 2/9/18.
+ * @author Haofan
+ * @version Feb 9, 2018
  */
 
 public class CustomGeofence {

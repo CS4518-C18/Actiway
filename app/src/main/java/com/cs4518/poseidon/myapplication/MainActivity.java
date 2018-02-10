@@ -39,6 +39,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
 
+import java.time.LocalDateTime;
+import java.util.Date;
+
+import static com.cs4518.poseidon.myapplication.Utilities.formatTime;
+
 /**
  * @author Haofan
  * @author Poseidon
@@ -86,6 +91,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LocationRequest locationRequest;
     private ActivityRecognitionClient mActivityRecognitionClient;
 
+    private long activityUpdatedAt;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mActivityRecognitionClient = new ActivityRecognitionClient(this);
         requestActivityUpdate();
+
         // initialize geofence manager
         if (mLocationPermissionGranted) {
             mGeofenceManager = new GeofenceManager(this);
@@ -301,6 +309,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void updateActivity() {
+
+        if(activityUpdatedAt == 0)
+            activityUpdatedAt = System.currentTimeMillis();
+        else {
+            long currentTime = System.currentTimeMillis();
+            long timeElapsed = currentTime - activityUpdatedAt;
+
+            String formattedTime = formatTime(timeElapsed);
+            String messgae = getString(R.string.activity_time_elapse, formattedTime);
+            Toast.makeText(this, messgae, Toast.LENGTH_LONG)
+                    .show();
+        }
+
         int activity;
         switch (currentActivity) {
             case DetectedActivity.STILL:
