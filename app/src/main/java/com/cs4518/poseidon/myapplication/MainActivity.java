@@ -1,9 +1,8 @@
 package com.cs4518.poseidon.myapplication;
 
 import android.app.PendingIntent;
-import android.content.Intent;
-import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
@@ -38,9 +37,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.Task;
-
-import java.time.LocalDateTime;
-import java.util.Date;
 
 import static com.cs4518.poseidon.myapplication.Utilities.formatTime;
 
@@ -113,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
-        updateActivity();
+        updateActivity(DetectedActivity.UNKNOWN);
 
         // initialize counter sensor
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -241,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true;
-                  
+
                     updateDeviceLocation();
                     mGeofenceManager = new GeofenceManager(this);
                     mGeofenceManager.intializeGeofencesList();
@@ -308,42 +304,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void updateActivity() {
+    private void updateActivity(int lastActivity) {
 
-        if(activityUpdatedAt == 0)
+        if (activityUpdatedAt == 0)
             activityUpdatedAt = System.currentTimeMillis();
         else {
             long currentTime = System.currentTimeMillis();
             long timeElapsed = currentTime - activityUpdatedAt;
 
             String formattedTime = formatTime(timeElapsed);
-            String messgae = getString(R.string.activity_time_elapse, formattedTime);
-            Toast.makeText(this, messgae, Toast.LENGTH_LONG)
+            String lastActivityName = Utilities.toString(this, lastActivity);
+            String message = getString(R.string.activity_time_elapse, lastActivityName, formattedTime);
+            Toast.makeText(this, message, Toast.LENGTH_LONG)
                     .show();
         }
 
-        int activity;
         switch (currentActivity) {
             case DetectedActivity.STILL:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.still));
-                activity = R.string.still;
                 break;
             case DetectedActivity.ON_FOOT:
             case DetectedActivity.WALKING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.walking));
-                activity = R.string.walking;
                 break;
             case DetectedActivity.ON_BICYCLE:
             case DetectedActivity.RUNNING:
                 mActivityImageView.setImageDrawable(getDrawable(R.drawable.running));
-                activity = R.string.running;
                 break;
             default:
                 mActivityImageView.setImageDrawable(null);
-                activity = R.string.unknown;
 
         }
-        mTextViewActivity.setText(getString(R.string.current_activity, getString(activity)));
+
+        String activityString = Utilities.toString(this, currentActivity);
+        mTextViewActivity.setText(getString(R.string.current_activity, activityString));
     }
 
     @Override
@@ -367,12 +361,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         if (s.equals(getString(R.string.current_activity_key))) {
+            int lastActivity = currentActivity;
             currentActivity = sharedPreferences.getInt(s, DetectedActivity.UNKNOWN);
-            updateActivity();
+            updateActivity(lastActivity);
         }
     }
-  
-    private void enterGeofence (CustomGeofence cGeofence, SensorEvent event) {
+
+    private void enterGeofence(CustomGeofence cGeofence, SensorEvent event) {
         if (!cGeofence.finishedSixSteps) {
             if (cGeofence.forTheFirstTime) {
                 String enterGeofence = "entering " + cGeofence.name + " geofence";
@@ -396,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void setNumEnteredGeofenceText () {
+    private void setNumEnteredGeofenceText() {
         String fullerText = "You visited Fuller lab for "
                 + String.valueOf(fullerGeofence.numEnteredGeofence)
                 + " times";

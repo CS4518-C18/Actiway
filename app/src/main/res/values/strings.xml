@@ -14,5 +14,5 @@
 
     <string name="current_activity_key">current_activity_key</string>
 
-    <string name="activity_time_elapse">You have just walked for %1$s</string>
+    <string name="activity_time_elapse">You have just %1$s for %2$s</string>
 </resources>
