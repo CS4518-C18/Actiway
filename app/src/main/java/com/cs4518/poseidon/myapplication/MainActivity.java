@@ -347,14 +347,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (GeofenceTransitionsIntentService.inFullerGeofence) {
                 enterGeofence(fullerGeofence, event);
             } else {
-                fullerGeofence.forTheFirstTime = true;
-                fullerGeofence.finishedSixSteps = false;
+                if (fullerGeofence.outForTheFirstTime) {
+                    fullerGeofence.inForTheFirstTime = true;
+                    fullerGeofence.finishedSixSteps = false;
+                    fullerGeofence.outForTheFirstTime = false;
+                }
             }
             if (GeofenceTransitionsIntentService.inLibraryGeofence) {
                 enterGeofence(libraryGeofence, event);
             } else {
-                libraryGeofence.forTheFirstTime = true;
-                libraryGeofence.finishedSixSteps = false;
+                if (libraryGeofence.outForTheFirstTime) {
+                    libraryGeofence.inForTheFirstTime = true;
+                    libraryGeofence.finishedSixSteps = false;
+                    libraryGeofence.outForTheFirstTime = false;
+                }
             }
         }
     }
@@ -370,13 +376,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void enterGeofence(CustomGeofence cGeofence, SensorEvent event) {
         if (!cGeofence.finishedSixSteps) {
-            if (cGeofence.forTheFirstTime) {
+            if (cGeofence.inForTheFirstTime) {
                 String enterGeofence = "entering " + cGeofence.name + " geofence";
                 Toast.makeText(this,
                         enterGeofence,
                         Toast.LENGTH_SHORT).show();
                 cGeofence.initialStepInGeofence = event.values[0];
-                cGeofence.forTheFirstTime = false;
+                cGeofence.inForTheFirstTime = false;
+                cGeofence.outForTheFirstTime = true;
             } else {
                 if (event.values[0] - cGeofence.initialStepInGeofence >= 6) {
                     cGeofence.numEnteredGeofence++;

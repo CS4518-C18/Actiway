@@ -7,9 +7,10 @@ package com.cs4518.poseidon.myapplication;
 
 public class CustomGeofence {
     protected String name;
-    protected Boolean forTheFirstTime = true;
+    protected Boolean inForTheFirstTime = true;
     protected Boolean finishedSixSteps = false;
     protected float initialStepInGeofence = 0;
+    protected Boolean outForTheFirstTime = false;
 
     // numEnteredGeofence
     protected int numEnteredGeofence = 0;
