@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String NUM_ENTERED_LIBRARY_GEOFENCE = "NUM_ENTERED_LIBRARY_GEOFENCE";
     SharedPreferences numEnteredSharedPref;
     private CustomGeofence fullerGeofence = new CustomGeofence(
-            "fuller",
+            "fuller lab",
             0,
             NUM_ENTERED_FULLER_GEOFENCE);
     private CustomGeofence libraryGeofence = new CustomGeofence(
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mGeofenceManager != null) mGeofenceManager.removeGeofencing();
         SharedPreferences.Editor editor = numEnteredSharedPref.edit();
         editor.putInt(fullerGeofence.SHARED_PREF_KEY, fullerGeofence.numEnteredGeofence);
-        editor.putInt(fullerGeofence.SHARED_PREF_KEY, libraryGeofence.numEnteredGeofence);
+        editor.putInt(libraryGeofence.SHARED_PREF_KEY, libraryGeofence.numEnteredGeofence);
         editor.apply();
         super.onStop();
     }
@@ -361,7 +361,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Toast.makeText(this,
                         enterGeofence,
                         Toast.LENGTH_SHORT).show();
-                System.out.println(enterGeofence);
                 cGeofence.initialStepInGeofence = event.values[0];
                 cGeofence.forTheFirstTime = false;
             } else {
@@ -393,6 +392,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
+
 }
 
 
