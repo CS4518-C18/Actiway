@@ -311,6 +311,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         else {
             long currentTime = System.currentTimeMillis();
             long timeElapsed = currentTime - activityUpdatedAt;
+            activityUpdatedAt = currentTime;
 
             String formattedTime = formatTime(timeElapsed);
             String lastActivityName = Utilities.toString(this, lastActivity);
